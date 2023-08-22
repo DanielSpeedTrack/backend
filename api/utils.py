@@ -10,4 +10,4 @@ class Util:
       from_email=settings.EMAIL_HOST_USER,
       to=[data['to_email']]
     )
-    email.send()
+    email.send()  

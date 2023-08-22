@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User
+from .models import *
 from django.utils.encoding import smart_str, force_bytes, DjangoUnicodeDecodeError
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
@@ -20,7 +20,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
     password = attrs.get('password')
     password2 = attrs.get('password2')
     if password != password2:
-      raise serializers.ValidationError("Password and Confirm Password doesn't match")
+      raise serializers.ValidationError("Les deux mots de passe ne correspondent pas")
     return attrs
 
   def create(self, validate_data):
@@ -104,4 +104,19 @@ class UserPasswordResetSerializer(serializers.Serializer):
     except DjangoUnicodeDecodeError as identifier:
       PasswordResetTokenGenerator().check_token(user, token)
       raise serializers.ValidationError('Token is not Valid or Expired')
-  
+
+
+class GPSSerializer(serializers.Serializer):
+    
+  class Meta:
+    fields = '__all__'
+    model = GPS
+
+
+class GPSCreationSerializer(serializers.ModelSerializer):
+
+  owner = UserProfileSerializer(read_only=True)
+
+  class Meta:
+    model = GPS
+    fields = [ 'code', 'owner']

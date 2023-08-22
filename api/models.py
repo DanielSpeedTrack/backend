@@ -42,7 +42,7 @@ class User(AbstractBaseUser):
       unique=True,
   )
   name = models.CharField(max_length=200)
-  tc = models.BooleanField()
+  tc = models.BooleanField(default = True)
   is_active = models.BooleanField(default=True)
   is_admin = models.BooleanField(default=False)
   created_at = models.DateTimeField(auto_now_add=True)
@@ -73,4 +73,54 @@ class User(AbstractBaseUser):
       return self.is_admin
 
 
+class GPS(models.Model):
+    
+    code = models.CharField( max_length=50, unique = True)
+    owner = models.ForeignKey('User', on_delete=models.CASCADE)
+    last_latitude = models.FloatField(blank=True, null=True)
+    last_longitude = models.FloatField(blank=True, null=True)
 
+    # def __str__(self):
+    #     return self.code
+    
+
+
+class GPSLOCATION(models.Model):
+    
+    gps = models.ForeignKey('GPS', on_delete=models.CASCADE)
+    last_latitude = models.FloatField(blank=True, null=True)
+    last_longitude = models.FloatField(blank=True, null=True)
+    date = models.DateField(auto_now_add=True)
+    time = models.TimeField( auto_now_add=True)
+
+class Service(models.Model):
+    owner = models.ForeignKey('User', on_delete=models.CASCADE)
+    service = models.CharField(max_length=50)
+    
+
+
+class SharingGps(models.Model):
+    gps = models.ForeignKey("GPS", related_name='Gps_Sharing', on_delete=models.CASCADE)
+    ownner = models.ForeignKey("User", related_name = 'sharing_from', on_delete=models.CASCADE)
+    user = models.ForeignKey("User", related_name='sharing_form', on_delete=models.CASCADE)
+    status = models.BooleanField(default = True)
+    starting_at = models.DateTimeField(auto_now_add=True)
+    ending_at = models.DateTimeField(blank=True, null=True)
+
+
+class Livraison(models.Model):
+    
+    gps = models.ForeignKey("GPS", related_name = 'gps_for_livraison', on_delete=models.CASCADE)
+    product_title = models.TextField()
+    product_description = models.TextField()
+    comming_from = models.ForeignKey("User", related_name = 'livraison_comming_from', on_delete=models.CASCADE)
+    going_to = models.ForeignKey("User", related_name = 'livraison_going_to', on_delete=models.CASCADE)
+    status = models.BooleanField(default = False)
+
+
+   
+
+
+
+
+   

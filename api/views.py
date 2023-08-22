@@ -1,12 +1,14 @@
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.views import APIView
-from .serializers import SendPasswordResetEmailSerializer, UserChangePasswordSerializer, UserLoginSerializer, UserPasswordResetSerializer, UserProfileSerializer, UserRegistrationSerializer
+from .serializers import *
 from django.contrib.auth import authenticate
 from .renderers import UserRenderer
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.decorators import api_view , permission_classes
 
+from django.db import IntegrityError
 # Generate Token Manually
 def get_tokens_for_user(user):
   refresh = RefreshToken.for_user(user)
@@ -19,10 +21,14 @@ class UserRegistrationView(APIView):
   renderer_classes = [UserRenderer]
   def post(self, request, format=None):
     serializer = UserRegistrationSerializer(data=request.data)
-    serializer.is_valid(raise_exception=True)
-    user = serializer.save()
-    token = get_tokens_for_user(user)
-    return Response({'token':token, 'msg':'Registration Successful'}, status=status.HTTP_201_CREATED)
+   
+    if serializer.is_valid():
+      user = serializer.save()
+      token = get_tokens_for_user(user)
+      return Response({'token':token, 'msg':'Registration Successful'}, status=status.HTTP_201_CREATED)
+    else: 
+      print( serializer.errors)
+      return Response({'message':serializer.errors}, status = 400)
 
 class UserLoginView(APIView):
   renderer_classes = [UserRenderer]
@@ -67,3 +73,20 @@ class UserPasswordResetView(APIView):
     serializer.is_valid(raise_exception=True)
     return Response({'msg':'Password Reset Successfully'}, status=status.HTTP_200_OK)
 
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def create_gps(request):
+  data = request.data
+  # data['owner'] = request.user.id
+  serializer = GPSCreationSerializer(data=data)
+  print(serializer)
+  if serializer.is_valid():
+    try:
+      serializer.save(owner = request.user)
+      return Response(serializer.data, status=status.HTTP_201_CREATED)
+    except IntegrityError as e:
+      return Response({'error': 'le code doit être unique.'}, status=status.HTTP_400_BAD_REQUEST)
+  else:
+    return Response({"error":'Erruer verifiez les champ'}, status = status.HTTP_400_BAD_REQUEST)
